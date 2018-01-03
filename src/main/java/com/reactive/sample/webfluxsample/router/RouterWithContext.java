@@ -1,6 +1,8 @@
 package com.reactive.sample.webfluxsample.router;
 
+import com.reactive.sample.webfluxsample.auth.Authenticator;
 import com.reactive.sample.webfluxsample.hanlder.SampleHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -13,11 +15,15 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 
 @Configuration
 public class RouterWithContext {
+    @Autowired
+    private Authenticator authenticator;
+
     @Bean
     public RouterFunction<ServerResponse> routeWithContext(SampleHandler handler) {
         return nest(path("/context"),
                 sampleRoute(handler)
-                        .and(handleRequestBodyRoute(handler)));
+                        .and(handleRequestBodyRoute(handler)))
+                .filter(authenticator::filterRoute);
     }
 
     private RouterFunction<ServerResponse> sampleRoute(SampleHandler handler) {
@@ -25,6 +31,6 @@ public class RouterWithContext {
     }
 
     private RouterFunction<ServerResponse> handleRequestBodyRoute(SampleHandler handler) {
-        return route(POST("/echo").and(accept(MediaType.APPLICATION_JSON)), handler::handleRequestWithABody);
+        return route(POST("/echo").and(contentType(MediaType.APPLICATION_JSON)), handler::handleRequestWithABody);
     }
 }
